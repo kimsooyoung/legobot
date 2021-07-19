@@ -27,8 +27,9 @@ const int8_t throttleControlPin = 11;  // L293D ENable(1,2) input on pin no 1 co
 const int8_t servoControlPin = 9;
 
 // Motor control global variables:
-int8_t motorSpeed = 0;  // Motor speed 0..255
-int8_t servoAngle = 0;  // variable to store the servo position
+// uint16 for 0-255 value
+int16_t motorSpeed = 0;  // Motor speed 0..255
+int16_t servoAngle = 0;  // variable to store the servo position
 
 int8_t motorDirection = 1;  // Forward (1) or reverse (0)
 
@@ -48,9 +49,8 @@ void setup()
 
 void loop()
 {
-  auto speed = getThrottle();
-  auto angle = getSteering();
-  SetMotorControl(speed, angle);  // adjust motor direction and speed
+  getControlData();
+  SetMotorControl();  // adjust motor direction and speed
 }
 
 /*
@@ -60,11 +60,11 @@ L293 logic:    EN1,2   1A    2A
 
 Motor speed:   PWM signal on EN1,2 (490 Hz; digital output value 0..255 for motorSpeed)
 */
-void SetMotorControl(const int &speed, const int &angle)
+void SetMotorControl()
 {
   //  String print_str = "Motor Speed" + speed;
   Serial.print("Set Motor Throttle : ");
-  Serial.println(speed);
+  Serial.println(motorSpeed);
   if (motorDirection == 1)  // Forward
   {
     digitalWrite(controlPin1A, HIGH);
@@ -75,11 +75,11 @@ void SetMotorControl(const int &speed, const int &angle)
     digitalWrite(controlPin1A, LOW);
     digitalWrite(controlPin2A, HIGH);
   }
-  analogWrite(throttleControlPin, speed);  // Speed
+  analogWrite(throttleControlPin, motorSpeed);  // Speed
 
   Serial.print("Set Motor Steeiring : ");
-  Serial.println(angle);
-  myservo.write(angle);  // tell servo to go to position in variable 'pos'
+  Serial.println(servoAngle);
+  myservo.write(servoAngle);  // tell servo to go to position in variable 'pos'
 }
 
 int getThrottle()
@@ -102,4 +102,27 @@ int getSteering()
   auto return_val = Serial.parseInt();
 
   return return_val;
+}
+
+void getControlData()
+{
+  char buffer[16];
+  char *strokBufer;
+
+  while (Serial.available() == 0)
+  {
+  }
+
+  int size = Serial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
+  Serial.println(buffer);
+
+  strokBufer = strtok(buffer, ",");
+  motorSpeed = atoi(strokBufer);
+  Serial.print("Throttle : ");
+  Serial.println(motorSpeed);
+
+  strokBufer = strtok(NULL, ",");
+  servoAngle = atoi(strokBufer);
+  Serial.print("Steering : ");
+  Serial.println(servoAngle);
 }
