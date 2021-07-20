@@ -65,6 +65,7 @@ void SetMotorControl()
   //  String print_str = "Motor Speed" + speed;
   Serial.print("Set Motor Throttle : ");
   Serial.println(motorSpeed);
+
   if (motorDirection == 1)  // Forward
   {
     digitalWrite(controlPin1A, HIGH);
@@ -118,6 +119,13 @@ void getControlData()
 
   strokBufer = strtok(buffer, ",");
   motorSpeed = atoi(strokBufer);
+  motorDirection = 1;
+  if (motorSpeed < 0)
+  {
+    motorDirection = 0;
+    motorSpeed *= -1;
+  }
+
   Serial.print("Throttle : ");
   Serial.println(motorSpeed);
 
